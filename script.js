@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
     { "Frame": 33, "Title": "2023", "H1Copy": "S144 — 3 MW platform", "BodyCopy": "Built for India's diverse wind sites...", "H2Copy-2": "Innovation meets inclusivity...<br>CONTINUE." },
     { "Frame": 34, "Title": "2024", "H1Copy": "Safeguarding India's renewable assets", "BodyCopy": "Acquisition of Renom Energy Services...", "H2Copy-2": "From powering turbines to protecting assets.<br>CONTINUE." },
     { "Frame": 35, "Title": "2025", "H1Copy": "Best year in a decade", "BodyCopy": "Record 5.6 GW order book...", "H2Copy-2": "From wind to possibility...<br>CONTINUE." }
-    // MODIFIED: Frame 36 has been removed.
   ];
   const screenData = [];
 
@@ -98,6 +97,11 @@ document.addEventListener('DOMContentLoaded', function () {
             imageDesktop: desktopImage,
             imageMobile: mobileImage
         });
+    }
+
+    // MODIFIED: Manually set the era for the final frame to match the new nav link
+    if (screenData[34]) {
+        screenData[34].era = '2025 Onwards';
     }
   })();
 
@@ -139,10 +143,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildTopNav() {
+    // MODIFIED: Added "2025 Onwards" to the navigation data
     const topNavData = [
-        { label: '1995-1999', screenIndex: 1 }, { label: '2000-2004', screenIndex: 4 },
-        { label: '2005-2009', screenIndex: 12 }, { label: '2010-2014', screenIndex: 23 },
-        { label: '2015-2019', screenIndex: 27 }, { label: '2020-2024', screenIndex: 29 }
+        { label: '1995-1999', screenIndex: 1 },
+        { label: '2000-2004', screenIndex: 4 },
+        { label: '2005-2009', screenIndex: 12 },
+        { label: '2010-2014', screenIndex: 23 },
+        { label: '2015-2019', screenIndex: 27 },
+        { label: '2020-2024', screenIndex: 29 },
+        { label: '2025 Onwards', screenIndex: 34 }
     ];
     topNavContainer.innerHTML = topNavData.map(d => 
         `<a href="#" data-target-index="${d.screenIndex}">${d.label}</a>`
