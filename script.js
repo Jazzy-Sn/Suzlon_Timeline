@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', function () {
     { "Frame": 32, "Title": "2023", "H1Copy": "20 GW installed worldwide", "BodyCopy": "Only Indian company to install over 20 GW across 17 countries...", "H2Copy-2": "Transforming energy that transforms lives.<br>CONTINUE." },
     { "Frame": 33, "Title": "2023", "H1Copy": "S144 — 3 MW platform", "BodyCopy": "Built for India's diverse wind sites...", "H2Copy-2": "Innovation meets inclusivity...<br>CONTINUE." },
     { "Frame": 34, "Title": "2024", "H1Copy": "Safeguarding India's renewable assets", "BodyCopy": "Acquisition of Renom Energy Services...", "H2Copy-2": "From powering turbines to protecting assets.<br>CONTINUE." },
-    { "Frame": 35, "Title": "2025", "H1Copy": "Best year in a decade", "BodyCopy": "Record 5.6 GW order book...", "H2Copy-2": "From wind to possibility...<br>CONTINUE." },
-    { "Frame": 36, "Title": "India's most trusted winds", "H1Copy": "", "BodyCopy": "", "H2Copy-2": "START THE JOURNEY" }
+    { "Frame": 35, "Title": "2025", "H1Copy": "Best year in a decade", "BodyCopy": "Record 5.6 GW order book...", "H2Copy-2": "From wind to possibility...<br>CONTINUE." }
+    // MODIFIED: Frame 36 has been removed.
   ];
   const screenData = [];
 
@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         let sub2Html = (data.subhead2 || "").replace(
             /(CONTINUE\.?)\s*$/i,
-
             `<span class="continue-cta" role="button" tabindex="0" aria-label="Continue to next frame">$1</span>`
         );
 
@@ -261,11 +260,10 @@ document.addEventListener('DOMContentLoaded', function () {
       drawTrailFromPoints(activeTrailPoints);
   }
 
-  // NEW: Extracted function to fade the last trail
   function fadeLastTrail() {
     if (settledTrails.length > 0) {
         const trailToFade = settledTrails[settledTrails.length - 1];
-        if (trailToFade.isFading) return; // Prevent double-fading
+        if (trailToFade.isFading) return;
         trailToFade.isFading = true;
 
         tween(1000, t => { trailToFade.opacity = 1 - t; }, 
@@ -274,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function planeExitRight(onDone) {
-      fadeLastTrail(); // Call the fade function
+      fadeLastTrail();
       activeTrailPoints = [];
       const r = ensurePlane().getBoundingClientRect();
       const startX = r.left, startY = r.top;
@@ -310,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
           lastPoint = currentPoint;
       }, () => {
           if (activeTrailPoints.length > 1) {
-              // Add isFading flag for the new fade logic
               settledTrails.push({ points: activeTrailPoints, opacity: 1.0, isFading: false });
           }
           activeTrailPoints = [];
@@ -358,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
       return [p0, p1, p2, p3];
   }
 
-  // MODIFIED: requestNav now handles trail fading on scroll up
   function requestNav(targetIndex, direction) {
       if (isScrolling) return;
 
@@ -372,13 +368,11 @@ document.addEventListener('DOMContentLoaded', function () {
       };
 
       if (direction > 0) {
-          // Scroll down: Use the exit animation which includes the fade
           planeExitRight(() => {
               goToScreen(targetIndex);
               afterSwitch();
           });
       } else {
-          // Scroll up: Manually fade the last trail, then switch screen
           fadeLastTrail();
           goToScreen(targetIndex);
           afterSwitch();
