@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // =====================================================
   let userIntervened = false;
   let currentScreenIndex = 0;
-  let isScrolling = false;
+  let isScrolling = false; // Still useful for some state, but not as a hard lock
   let screens = [];
   let planeEl = null;
   let lastExitY = null;
@@ -13,8 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
   // Trail state variables
   let trailCanvas, ctx;
   let activeTrailPoints = [];
-  let settledTrails = []; // Will store { points: [...], opacity: 1.0, isFading: false }
+  let settledTrails = [];
   const SUZLON_TEAL = '#00978D';
+
+  // State for debouncing and interrupting animations
+  let navDebounceTimer;
+  let activeTweenId = null;
+
+  // --- Touch event state ---
+  let touchStartY = 0;
+  let isTouching = false;
 
 
   // =====================================================
@@ -47,95 +55,26 @@ document.addEventListener('DOMContentLoaded', function () {
     { "Frame": 13, "Title": "2005", "H1Copy": "Taking wind energy public...", "BodyCopy": "Suzlon brought wind and its magic to every Indian through its public listing.Everyday investors rallied behind India's wind energy revolution, making it the ‘IPO of the year’ which was oversubscribed by 15x on Day 1.", "H2Copy-2": "A journey from 5+ lakh to 55+ lakh retail investors.<br>CONTINUE." },
     { "Frame": 14, "Title": "2005", "H1Copy": "Suzlon ranked 9th globally by BTM Report", "BodyCopy": "Suzlon became the first and only Indian wind company to enter the global top ten putting India on the global energy map – a defining moment that proved homegrown wind technology could compete and lead worldwide", "H2Copy-2": "Taking India to the world.<br>CONTINUE." },
     { "Frame": 15, "Title": "2005", "H1Copy": "First 2 MW turbine commissioned", "BodyCopy": "Suzlon dedicated India's largest turbine at the time to the nation on Independence Day, symbolising freedom from fossil fuels and a new kind of power - a bold step towards energy independence.", "H2Copy-2": "An odyssey of innovation from 0.2 MW to 3.15 MW.<br>CONTINUE." },
-	  //Suzlon dedicated India's largest turbine at the time to the nation on Independence Day, symbolising freedom from fossil fuels and a new kind of power – a bold step towards energy independence.
-
     { "Frame": 16, "Title": "2005", "H1Copy": "1,000 MW milestone crossed", "BodyCopy": "/What began as a cottage industry matured into an established sector with Suzlon’s 1,000 MW milestone. The nation took note as a young industry stepped up to mark the beginning of a new phase of a self-reliant India", "H2Copy-2": "From \"good-to-have\" to critical for India's energy transition.<br>CONTINUE." },
-	  
-	  //What began as a cottage industry matured into an established sector with Suzlon’s 1,000 MW milestone. The nation took note as a young industry stepped up to mark the beginning of a new phase of a self-reliant India.
-
     { "Frame": 17, "Title": "2006", "H1Copy": "Hansen Transmissions acquired", "BodyCopy": "In India’s second-largest foreign acquisition, Belgium’s Hansen Transmissions became part of the Suzlon family, which solved a global gearbox shortage and accelerated wind energy installations worldwide.", "H2Copy-2": "Ambition to action, a win for the planet.<br>CONTINUE." },
-	  //In India’s second-largest foreign acquisition, Belgium’s Hansen Transmissions became part of the Suzlon family, which solved a global gearbox shortage and accelerated wind energy installations worldwide.
-
-	  
     { "Frame": 18, "Title": "2006", "H1Copy": "Ranked fifth WTG manufacturer globally", "BodyCopy": "As Suzlon grew from strength to strength, India, too, rose in global recognition, proving that world-class wind technology could be imagined, built, and exported from India.", "H2Copy-2": "Achieving climate action through Indian ambition.<br>CONTINUE." },
-	  //As Suzlon grew from strength to strength, India, too, rose in global recognition, proving that world-class wind technology could be imagined, built, and exported from India.
-
-	  
     { "Frame": 19, "Title": "2007", "H1Copy": "SE Forge Limited formed", "BodyCopy": "Suzlon established India’s first dedicated foundries for wind energy at Coimbatore and Vadodara, taking another step in \'self-reliance\''", "H2Copy-2": "Indigenising wind manufacturing ecosystem decades before \'Aatmanirbhar Bharat.\''<br>CONTINUE." },
-	  //Suzlon established India’s first dedicated foundries for wind energy at Coimbatore and Vadodara, taking another step in ‘self-reliance’.
-	  //Indigenising wind manufacturing ecosystem decades before ‘Aatmanirbhar Bharat.’ 
-	  
     { "Frame": 20, "Title": "2007", "H1Copy": "Asia's first blade testing facility established", "BodyCopy": "As Suzlon set up its first blade testing facility at Vadodara, India became the only country after the Netherlands and the USA to qualify and certify wind tech as per international standards.", "H2Copy-2": "Leading the world in R&D and Testing.<br>CONTINUE." },
-	  //As Suzlon set up its first blade testing facility at Vadodara, India became the only country after the Netherlands and the USA to qualify and certify wind tech as per international standards. 
-
-	  
     { "Frame": 21, "Title": "2007", "H1Copy": "First wind energy company to receive FDI", "BodyCopy": "A 40 MW project from British Petroleum made Suzlon the only Indian manufacturer to attract Foreign Direct Investment into the wind energy sector marking a new era of international collaboration.", "H2Copy-2": "Making India a credible renewables investment hub.<br>CONTINUE." },
-	  //A 40 MW project from British Petroleum made Suzlon the only Indian manufacturer to attract Foreign Direct Investment into the wind energy sector marking a new era of international collaboration.
-
-	  
     { "Frame": 22, "Title": "2008", "H1Copy": "Harvard Business school case study", "BodyCopy": "Harvard Business School wrote \"The Suzlon Edge,\" a case study that analysed Suzlon’s bold strategies and rapid rise.", "H2Copy-2": "A journey that caught history's eye.<br>CONTINUE." },
-	  //Harvard Business School wrote “The Suzlon Edge,” a case study that analysed Suzlon’s bold strategies and rapid rise.
-
-	  
     { "Frame": 23, "Title": "2009", "H1Copy": "Suzlon and TERI University sign an MoU", "BodyCopy": "Suzlon introduced the very first M.Tech in Renewable Energy to nurture young talent into innovators who would dream boldly, build sustainably, and power the nation\'s tomorrow. ", "H2Copy-2": "The story of building a nation.<br>CONTINUE." },
-	  //Suzlon introduced the very first M. Tech in Renewable Energy to nurture young talent into innovators who would dream boldly, build sustainably, and power the nation’s tomorrow. 
-
-	  
     { "Frame": 24, "Title": "2010", "H1Copy": "Ranked third WTG manufacturer globally", "BodyCopy": "Suzlon became the first and only Indian wind energy company to reach the global top three, proving that scale, technology, and vision can rise from Indian soil.", "H2Copy-2": "From No. 1 in India to No. 3 in the world.<br>CONTINUE." },
-	  //Suzlon became the first and only Indian wind energy company to reach the global top three, proving that scale, technology, and vision can rise from Indian soil.
-
-	  
-	  
     { "Frame": 25, "Title": "2010", "H1Copy": "Among the world's greenest HQ", "BodyCopy": "As clean power surged across India, the nation also became home to one of the world’s greenest corporate campuses, Suzlon One Earth in Pune, a physical form of Suzlon's sustainable vision.", "H2Copy-2": "As wind found a home, so did sustainability.<br>CONTINUE." },
-	  //As clean power surged across India, the nation also became home to one of the world’s greenest corporate campuses, Suzlon One Earth in Pune, a physical form of Suzlon's sustainable vision.
-
-	  
     { "Frame": 26, "Title": "2014", "H1Copy": "Asia's largest wind park in Gujarat", "BodyCopy": "At 1,100 MW, the Kutch Wind Park emerged as one of India\'s largest symbol of hope and scale in the fight against climate change.", "H2Copy-2": "Scaling climate action with every wind park.<br>CONTINUE." },
-	  //At 1,100 MW, the Kutch Wind Park emerged as one of India’s largest symbol of hope and scale in the fight against climate change.
-
-	  
     { "Frame": 27, "Title": "2014", "H1Copy": "India\'s first Hybrid Lattice Tower introduced", "BodyCopy": "At 120 metres, Suzlon’s hybrid lattice–tubular tower at Jamanwada reached higher to tap stronger winds, boost output, and expand wind’s reach. An innovation unmatched in over a decade.", "H2Copy-2": "Marching ahead with a passion for innovation.<br>CONTINUE." },
-	  
-	  //India\'s first Hybrid Lattice Tower introduced
-	  //At 120 metres, Suzlon’s hybrid lattice–tubular tower at Jamanwada reached higher to tap stronger winds, boost output, and expand wind’s reach. An innovation unmatched in over a decade.
-
-	  
-	  
     { "Frame": 28, "Title": "2017", "H1Copy": "11 GW milestone achieved", "BodyCopy": "More wind energy for more cities, industries, and homes, improving lives and strengthening India's clean energy leadership.", "H2Copy-2": "From milestone to movement, wind became India\'s strength.<br>CONTINUE." },
-	  //More wind energy for more cities, industries, and homes, improving lives and strengthening India's clean energy leadership.
-	  //From milestone to movement, wind became India’s strength. 
-	  
-	  
-	  
     { "Frame": 29, "Title": "2018", "H1Copy": "Suzlon\'s largest WTG, S128, commissioned", "BodyCopy": "At 140m hub height and rotor diameter of 128m, Suzlon launched ️India's largest wind turbine generator ever at the time at Sanganeri. Capturing stronger winds from smaller areas, the technology redefined efficiency in clean energy generation.", "H2Copy-2": "Turbines that stand as tall as the nation.<br>CONTINUE." },
-	  //Suzlon\'s largest WTG, S128, commissioned
-	  //At 140m hub height and rotor diameter of 128m, Suzlon launched ️India's largest wind turbine generator ever at the time at Sanganeri. Capturing stronger winds from smaller areas, the technology redefined efficiency in clean energy generation.
-
-	  
     { "Frame": 30, "Title": "2020", "H1Copy": "Restructuring for growth", "BodyCopy": "Suzlon not just restructured its debt, easing cash flow but also its organization and business models creating headroom for ramping up business operations. Combined with a ₹1,200 crore oversubscribed Rights Issue, it enabled Suzlon to take on the future from a position of strength.", "H2Copy-2": "Progress built on resilience.<br>CONTINUE." },
-	//Suzlon not just restructured its debt, easing cash flow but also its organization and business models creating headroom for ramping up business operations. Combined with a ₹1,200 crore oversubscribed Rights Issue, it enabled Suzlon to take on the future from a position of strength.
-  
-	  
     { "Frame": 31, "Title": "2022-23", "H1Copy": "Debt-free and positioned to lead", "BodyCopy": "Investors rallied behind Suzlon’s turnaround with a ₹1,200 crore oversubscribed Rights Issue followed by a ₹2,000 crore Qualified Institutional Placement (QIP) oversubscribed 2.3x, which made Suzlon net debt-free, unlocking greater value for stakeholders", "H2Copy-2": "Investors backed the future of wind.<br>CONTINUE." },
-	  //Investors rallied behind Suzlon’s turnaround with a ₹1,200 crore oversubscribed Rights Issue followed by a ₹2,000 crore Qualified Institutional Placement (QIP) oversubscribed 2.3x, which made Suzlon net debt-free, unlocking greater value for stakeholders. 
-
-	  
     { "Frame": 32, "Title": "2023", "H1Copy": "20 GW installed worldwide", "BodyCopy": "As Suzlon became the only Indian company to install over 20 GW across 17 countries, Indian wind energy made its mark as it received global trust and respect, matching the world\'s best in engineering, quality, and scale.", "H2Copy-2": "Transforming energy that transforms lives.<br>CONTINUE." },
-	  //As Suzlon became the only Indian company to install over 20 GW across 17 countries, Indian wind energy made its mark as it received global trust and respect, matching the world’s best in engineering, quality, and scale.
-
     { "Frame": 33, "Title": "2023", "H1Copy": "S144, Suzlon\'s 3 MW platform makes low-wind sites work", "BodyCopy": "A new generation of turbines, built for India\'s diverse weather conditions, delivers more low-cost power and care to nature.", "H2Copy-2": "Innovation meets inclusivity...<br>CONTINUE." },
-	  //S144, Suzlon\'s 3 MW platform makes low-wind sites work
-	  //A new generation of turbines, built for India\'s diverse weather conditions, delivers more low-cost power and care to nature.
-
-	  
     { "Frame": 34, "Title": "2024", "H1Copy": "Safeguarding India's renewable assets", "BodyCopy": "Committed to protecting the nation\'s smaller wind energy assets Suzlon acquired India\'s largest multi-brand OMS provider, Renom Energy Services, strengthening the wind ecosystem and ensuring multi-make turbines remain efficient, reliable, and productive for decades.", "H2Copy-2": "From powering turbines to protecting assets.<br>CONTINUE." },
-	  //Committed to protecting the nation\'s smaller wind energy assets Suzlon acquired India\'s largest multi-brand OMS provider, Renom Energy Services, strengthening the wind ecosystem and ensuring multi-make turbines remain efficient, reliable, and productive for decades.
-
-	  
     { "Frame": 35, "Title": "2025", "H1Copy": "Best year in a decade", "BodyCopy": "Suzlon’s transformation led to its best performance in 10 years, with a record 5.6 GW order book, stronger deliveries, and record-high revenue and profits, proving the resilience of Suzlon’s strategy and the strength of India’s wind energy sector.", "H2Copy-2": "From wind to possibility, from today to tomorrow — the story goes on.<br>CONTINUE." }
-	  //Suzlon’s transformation led to its best performance in 10 years, with a record 5.6 GW order book, stronger deliveries, and record-high revenue and profits, proving the resilience of Suzlon’s strategy and the strength of India’s wind energy sector.
-	  //From wind to possibility, from today to tomorrow — the story goes on.
-
   ];
   const screenData = [];
 
@@ -150,7 +89,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (y1 <= 2009) return '2005-2009';
         if (y1 <= 2014) return '2010-2014';
         if (y1 <= 2019) return '2015-2019';
-        return '2020-2024';
+        if (y1 <= 2024) return '2020-2024';
+        return '2025 Onwards';
     }
     for (let i = 0; i < xlsxTimeline.length; i++) {
         const src = xlsxTimeline[i];
@@ -168,15 +108,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // MODIFIED: Manually set the era for the final frame to match the new nav link
-    if (screenData[34]) {
-        screenData[34].era = '2025 Onwards';
-    }
+    if (screenData[34]) { screenData[34].era = '2025 Onwards'; }
   })();
 
   const screenContainer = document.getElementById('screen-container');
   const topNavContainer = document.getElementById('top-nav');
-  const homeBtn = document.getElementById('home-btn');
 
   function buildScreens() {
     screenContainer.innerHTML = "";
@@ -189,6 +125,16 @@ document.addEventListener('DOMContentLoaded', function () {
         screen.className = `screen ${alignmentClass}`;
         screen.id = `screen-${index}`;
         
+        // --- MODIFICATION START: Make "START THE JOURNEY" clickable ---
+        let subheadHtml = data.subhead || "";
+        if (index === 0) { // Special case for the first screen
+            subheadHtml = subheadHtml.replace(
+                /(START THE JOURNEY)/i,
+                `<span class="continue-cta" role="button" tabindex="0" aria-label="Start the journey">$1</span>`
+            );
+        }
+        // --- MODIFICATION END ---
+
         let sub2Html = (data.subhead2 || "").replace(
             /(CONTINUE\.?)\s*$/i,
             `<span class="continue-cta" role="button" tabindex="0" aria-label="Continue to next frame">$1</span>`
@@ -198,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="screen-foreground-bg"></div>
             <div class="screen-content">
               <h1 class="screen-headline">${data.headline}</h1>
-              <h2 class="screen-subhead">${data.subhead || ""}</h2>
+              <h2 class="screen-subhead">${subheadHtml}</h2>
               <p class="screen-body">${data.body || ""}</p>
               ${sub2Html ? `<h2 class="screen-subhead2 fly-left">${sub2Html}</h2>` : ''}
             </div>`;
@@ -212,14 +158,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildTopNav() {
-    // MODIFIED: Added "2025 Onwards" to the navigation data
     const topNavData = [
-        { label: '1995-1999', screenIndex: 1 },
-        { label: '2000-2004', screenIndex: 4 },
-        { label: '2005-2009', screenIndex: 12 },
-        { label: '2010-2014', screenIndex: 23 },
-        { label: '2015-2019', screenIndex: 27 },
-        { label: '2020-2024', screenIndex: 29 },
+        { label: '1995-1999', screenIndex: 1 }, { label: '2000-2004', screenIndex: 4 },
+        { label: '2005-2009', screenIndex: 12 }, { label: '2010-2014', screenIndex: 23 },
+        { label: '2015-2019', screenIndex: 27 }, { label: '2020-2024', screenIndex: 29 },
         { label: '2025 Onwards', screenIndex: 34 }
     ];
     topNavContainer.innerHTML = topNavData.map(d => 
@@ -230,6 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function createNavArrows() {
     const arrows = document.createElement('div');
     arrows.className = 'screen-arrows';
+    // --- FIX: Corrected the typo in viewBox from "0- 0" to "0 0" ---
     arrows.innerHTML = `
       <button class="arrow-btn prev" aria-label="Previous screen" title="Previous"><svg viewBox="0 0 24 24" width="24" height="24"><polygon points="15,6 9,12 15,18"></polygon></svg></button>
       <button class="arrow-btn next" aria-label="Next screen" title="Next"><svg viewBox="0 0 24 24" width="24" height="24"><polygon points="9,6 15,12 9,18"></polygon></svg></button>`;
@@ -243,30 +186,70 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function goToScreen(index) {
-    if (isScrolling) return;
-    isScrolling = true;
     currentScreenIndex = index;
     screens.forEach((screen, i) => screen.classList.toggle("active-screen", i === currentScreenIndex));
     updateNavigation();
-    setTimeout(() => { isScrolling = false; }, 4700);
+    isScrolling = false; // Reset lock after screen transition is visually done
   }
 
   function wireNavigationHandlers() {
+    // Click events
     document.body.addEventListener('click', (e) => {
         userIntervened = true;
         if (e.target.closest('.prev')) { requestNav(currentScreenIndex - 1, -1); }
         if (e.target.closest('.next')) { requestNav(currentScreenIndex + 1, +1); }
         if (e.target.closest('.continue-cta')) { requestNav(currentScreenIndex + 1, +1); }
+        if (e.target.closest('.plane')) {
+            // Only navigate if the plane is static (no active animation)
+            if (activeTweenId === null) {
+                requestNav(currentScreenIndex + 1, +1);
+            }
+        }
         if (e.target.closest('.header-logo') || e.target.closest('#home-btn')) { e.preventDefault(); requestNav(0, -1); }
         if (e.target.closest('#top-nav a')) { e.preventDefault(); requestNav(parseInt(e.target.dataset.targetIndex, 10), +1); }
     });
-    window.addEventListener('wheel', e => { if (!isScrolling) { userIntervened = true; e.deltaY > 5 ? requestNav(currentScreenIndex + 1, +1) : e.deltaY < -5 && requestNav(currentScreenIndex - 1, -1); }}, { passive: true });
-    window.addEventListener('keydown', e => {
+    
+    // Mouse wheel
+    window.addEventListener('wheel', e => { 
         if (isScrolling) return;
+        userIntervened = true; 
+        e.deltaY > 5 ? requestNav(currentScreenIndex + 1, +1) : e.deltaY < -5 && requestNav(currentScreenIndex - 1, -1); 
+    }, { passive: true });
+    
+    // Keyboard
+    window.addEventListener('keydown', e => {
+        if (isScrolling) return; 
         userIntervened = true;
         if (['ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) requestNav(currentScreenIndex + 1, +1);
         if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) requestNav(currentScreenIndex - 1, -1);
     });
+
+    // Touch scroll events for mobile
+    window.addEventListener('touchstart', e => {
+        if (isScrolling) return;
+        isTouching = true;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+        if (!isTouching || isScrolling) return;
+        const touchDeltaY = touchStartY - e.touches[0].clientY;
+        const swipeThreshold = 50;
+        if (touchDeltaY > swipeThreshold) {
+            userIntervened = true;
+            requestNav(currentScreenIndex + 1, +1);
+            isTouching = false;
+        } else if (touchDeltaY < -swipeThreshold) {
+            userIntervened = true;
+            requestNav(currentScreenIndex - 1, -1);
+            isTouching = false;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        isTouching = false;
+        touchStartY = 0;
+    }, { passive: true });
   }
 
   function ensurePlane() {
@@ -278,29 +261,32 @@ document.addEventListener('DOMContentLoaded', function () {
     return planeEl;
   }
   
-  function placePlane(x, y, deg = 0) {
-    ensurePlane().style.transform = `translate(${x}px, ${y}px) rotate(${deg}deg)`;
-  }
-  
+  function placePlane(x, y, deg = 0) { ensurePlane().style.transform = `translate(${x}px, ${y}px) rotate(${deg}deg)`; }
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   
+  // Tween function is now interruptible
   function tween(ms, update, done) {
+    const thisId = Symbol();
+    activeTweenId = thisId;
     const t0 = performance.now();
+    
     const step = now => {
+        if (activeTweenId !== thisId) return;
         const t = clamp((now - t0) / ms, 0, 1);
         update(t);
-        if (t < 1) requestAnimationFrame(step);
-        else done?.();
+        if (t < 1) {
+            requestAnimationFrame(step);
+        } else {
+            activeTweenId = null;
+            done?.();
+        }
     };
     requestAnimationFrame(step);
   }
 
   function initTrailCanvas() {
       trailCanvas = document.getElementById('plane-trail');
-      if (!trailCanvas) {
-          console.error("Canvas element #plane-trail not found!");
-          return;
-      }
+      if (!trailCanvas) { console.error("Canvas element #plane-trail not found!"); return; }
       ctx = trailCanvas.getContext('2d');
       const resizeCanvas = () => {
           trailCanvas.width = window.innerWidth;
@@ -322,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function animateFrame() {
       requestAnimationFrame(animateFrame);
       ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-      
       ctx.strokeStyle = SUZLON_TEAL;
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
@@ -343,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const trailToFade = settledTrails[settledTrails.length - 1];
         if (trailToFade.isFading) return;
         trailToFade.isFading = true;
-
         tween(1000, t => { trailToFade.opacity = 1 - t; }, 
             () => { settledTrails = settledTrails.filter(t => t.opacity > 0); });
     }
@@ -378,6 +362,9 @@ document.addEventListener('DOMContentLoaded', function () {
       activeTrailPoints = [];
       let lastPoint = p0;
       
+      // --- MODIFICATION: Disable clicks during animation ---
+      ensurePlane().style.pointerEvents = 'none';
+      
       tween(duration, t => {
           const currentPoint = getCubicBezierPoint(t, p0, p1, p2, p3);
           const angle = Math.atan2(currentPoint.y - lastPoint.y, currentPoint.x - lastPoint.x) * (180 / Math.PI);
@@ -389,11 +376,19 @@ document.addEventListener('DOMContentLoaded', function () {
               settledTrails.push({ points: activeTrailPoints, opacity: 1.0, isFading: false });
           }
           activeTrailPoints = [];
+          
+          // --- MODIFICATION: Re-enable clicks after animation is done ---
+          ensurePlane().style.pointerEvents = 'auto';
+          
           onDone?.();
       });
   }
 
   function getAnimationPath(screenIndex, direction) {
+      const footer = document.querySelector('footer');
+      const landingZoneBottom = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+      const maxY = landingZoneBottom - PLANE_H - 10;
+      
       let p3; 
       if (screenIndex >= 1 && screenIndex <= 34) {
           const ctaEl = document.querySelector(`#screen-${screenIndex} .continue-cta`);
@@ -402,8 +397,8 @@ document.addEventListener('DOMContentLoaded', function () {
               const offsetX = 10 + Math.random() * 30;
               const offsetY = 10 + Math.random() * 30;
               p3 = {
-                  x: clamp(ctaRect.right + offsetX, 8, innerWidth - PLANE_W - 8),
-                  y: clamp(ctaRect.bottom + offsetY, 8, innerHeight - PLANE_H - 8)
+                  x: clamp(ctaRect.right + offsetX, 8, window.innerWidth - PLANE_W - 8),
+                  y: clamp(ctaRect.bottom + offsetY, 8, maxY)
               };
           }
       }
@@ -411,10 +406,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!p3) {
           const rect = document.querySelector(`#screen-${screenIndex} .screen-subhead2, #screen-${screenIndex} .screen-subhead`)?.getBoundingClientRect()
               || { left: 80, bottom: 120, right: 80, top: 120 };
-          
           p3 = { 
-              x: clamp(rect.left, 8, innerWidth - PLANE_W - 8), 
-              y: clamp(rect.bottom + 16, 8, innerHeight - PLANE_H - 8) 
+              x: clamp(rect.left, 8, window.innerWidth - PLANE_W - 8),
+              y: clamp(rect.bottom + 16, 8, maxY)
           };
       }
   
@@ -434,35 +428,37 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function requestNav(targetIndex, direction) {
-      if (isScrolling) return;
-
+    clearTimeout(navDebounceTimer);
+    navDebounceTimer = setTimeout(() => {
+        executeNavigation(targetIndex, direction);
+    }, 100);
+  }
+  
+  function executeNavigation(targetIndex, direction) {
+      settledTrails = [];
       const totalScreens = screenData.length;
       targetIndex = (targetIndex + totalScreens) % totalScreens;
+      
       if (targetIndex === currentScreenIndex && userIntervened) return;
+      isScrolling = true;
 
       const afterSwitch = () => {
           const path = getAnimationPath(targetIndex, direction);
-          animatePlaneWithLoop(path, 4500);
+          animatePlaneWithLoop(path, 4500); 
       };
 
-      if (direction > 0) {
-          planeExitRight(() => {
-              goToScreen(targetIndex);
-              afterSwitch();
-          });
-      } else {
-          fadeLastTrail();
-          goToScreen(targetIndex);
-          afterSwitch();
-      }
+      goToScreen(targetIndex);
+      afterSwitch();
   }
 
+  // --- Initial Setup ---
   buildScreens();
   buildTopNav();
   createNavArrows();
   wireNavigationHandlers();
   initTrailCanvas();
   
+  // Initial load
   goToScreen(0);
   const initialPath = getAnimationPath(0, -1);
   animatePlaneWithLoop(initialPath, 4500);
