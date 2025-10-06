@@ -288,7 +288,7 @@ footer { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100; backgro
     font-size: 16px;
   }
   .screen:not(#screen-0) .screen-body {
-    font-size: 12px;
+    font-size: 9px;
     font-weight: normal;
     font-style: normal;
   }
