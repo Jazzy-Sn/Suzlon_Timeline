@@ -200,7 +200,7 @@ footer { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100; backgro
 :root { --title-teal: #00978D; }
 .screen:not(#screen-0) .screen-headline {
   font-family: "proxima-nova", sans-serif; font-weight: 700; font-style: normal;
-  color: var(--title-teal); font-size: 120px; line-height: 1.08; letter-spacing: 0;
+  color: var(--title-teal); font-size: 100px; line-height: 1.08; letter-spacing: 0;
 }
 .screen:not(#screen-0) .screen-subhead {
   font-family: "proxima-nova", sans-serif; font-weight: 700; font-style: normal;
@@ -288,7 +288,7 @@ footer { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100; backgro
     font-size: 16px;
   }
   .screen:not(#screen-0) .screen-body {
-    font-size: 9px;
+    font-size: 12px;
     font-weight: normal;
     font-style: normal;
   }
